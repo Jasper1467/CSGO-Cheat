@@ -123,9 +123,6 @@
     <ClCompile Include="SDK\KeyValues.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Features\GrenadePrediction.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="Features\AutoWall.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -528,9 +525,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="SDK\bspflags.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Features\GrenadePrediction.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Features\AutoWall.h">

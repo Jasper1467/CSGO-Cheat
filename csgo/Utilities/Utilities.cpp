@@ -36,7 +36,7 @@ uint8_t* Utilities::ScanSignature(HMODULE hModule, const char* szSignature)
     for (auto i = 0ul; i < sizeOfImage - s; ++i)
     {
         bool bFound = true;
-        for (auto j = 0ul; j < s; ++j) 
+        for (auto j = 0ul; j < s; ++j)
         {
             if (scanBytes[i + j] != d[j] && d[j] != -1)
             {
@@ -54,14 +54,7 @@ uint8_t* Utilities::ScanSignature(HMODULE hModule, const char* szSignature)
 
 uint8_t* Utilities::ScanSignature(const char* szModule, const char* szSignature)
 {
-	uint8_t* pRes = ScanSignature(GetModuleHandleA(szModule), szSignature);
-	if (!pRes)
-	{
-		printf("[ERROR] Signature not found: %s ; %s\n", szModule, szSignature);
-		return nullptr;
-	}
-
-	return pRes;
+	return ScanSignature(GetModuleHandleA(szModule), szSignature);
 }
 
 const char* Utilities::Format(const char* szFmt, ...)

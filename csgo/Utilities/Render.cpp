@@ -5,7 +5,6 @@
 #include "Client.h"
 #include "../Features/Visuals.h"
 #include "../Features/Events.h"
-#include "../Features/GrenadePrediction.h"
 #include "../Menu/Config/Vars.h"
 
 #include "ByteArrays/Droid.h"
@@ -65,7 +64,7 @@ void Renderer::BeginScene()
 	{
 		Features::Visuals::AddToDrawList();
 		Features::Events::Draw();
-		Features::GrenadePrediction::Draw();
+		//Features::GrenadePrediction::Draw();
 	}
 
 	RectFilled(ImVec2(Client::m_nScreenSizeX, 0.f), ImVec2(Client::m_nScreenSizeX - 250.f, 30.f), Color(0, 0, 0, 255));

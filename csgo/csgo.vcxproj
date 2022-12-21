@@ -158,7 +158,6 @@
     <ClCompile Include="Features\Chams.cpp" />
     <ClCompile Include="Features\Commands.cpp" />
     <ClCompile Include="Features\Events.cpp" />
-    <ClCompile Include="Features\GrenadePrediction.cpp" />
     <ClCompile Include="Features\LegitBot.cpp" />
     <ClCompile Include="Features\Misc.cpp" />
     <ClCompile Include="Features\Visuals.cpp" />
@@ -246,7 +245,6 @@
     <ClInclude Include="Features\Chams.h" />
     <ClInclude Include="Features\Commands.h" />
     <ClInclude Include="Features\Events.h" />
-    <ClInclude Include="Features\GrenadePrediction.h" />
     <ClInclude Include="Features\LegitBot.h" />
     <ClInclude Include="Features\Misc.h" />
     <ClInclude Include="Features\Visuals.h" />

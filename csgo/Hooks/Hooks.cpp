@@ -26,7 +26,6 @@
 #include "../Features/LegitBot.h"
 #include "../Features/Commands.h"
 #include "../Features/Chams.h"
-#include "../Features/GrenadePrediction.h"
 
 #include "../Utilities/Profiler.h"
 #include "../CompilerDefinitions.h"
@@ -248,7 +247,7 @@ static void __stdcall CreateMove(int nSequenceNumber, float flInputSampleFrameti
 	Features::Misc::AutoStrafer();
 	Features::Misc::ClanTag();
 
-	Features::GrenadePrediction::Trace();
+	//Features::GrenadePrediction::Trace();
 
 	Features::LegitBot::TriggerBot();
 
