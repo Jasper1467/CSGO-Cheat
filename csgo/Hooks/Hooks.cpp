@@ -102,9 +102,8 @@ bool Hooks::Initialize()
 		hkGetColorModulation))
 		return false;
 
-	if (!Managers::m_IsUsingStaticPropDebugModes.Create(SCAN_SIGNATURE("engine.dll",
-		"8B 0D ? ? ? ? 81 F9 ? ? ? ? 75 ? A1 ? ? ? ? 35 ? ? ? ? EB ? 8B 01 FF 50 ? 83 F8 ? 0F 85 ? ? ? ? 8B 0D"),
-		hkIsUsingStaticPropDebugModes))
+	if (!Managers::m_IsUsingStaticPropDebugModes.Create(
+		(void*)SCAN_SIGNATURE_RELATIVE("engine.dll", "E8 ? ? ? ? 84 C0 8B 45 08", 1), hkIsUsingStaticPropDebugModes))
 		return false;
 
 	if (!Managers::m_FrameStageNotify.Create(____GetVFunc(Interfaces::m_pClient, FRAME_STAGE_NOTIFY_INDEX), &hkFrameStageNotify))
@@ -248,7 +247,8 @@ static void __stdcall CreateMove(int nSequenceNumber, float flInputSampleFrameti
 	Features::Misc::BunnyHop();
 	Features::Misc::AutoStrafer();
 	Features::Misc::ClanTag();
-	//Features::GrenadePrediction::Tick(Client::m_pCmd->m_nButtons);
+
+	Features::GrenadePrediction::Trace();
 
 	Features::LegitBot::TriggerBot();
 
@@ -385,10 +385,6 @@ void __fastcall	Hooks::hkOverrideView(void* ecx, int edx, CViewSetup* pSetup)
 
 	if (Vars::Visuals::Misc::m_bFov && Interfaces::m_pEngine->IsInGame())
 		pSetup->m_flFOV += Vars::Visuals::Misc::m_flFov - 50.f;
-
-	//auto pWeapon = Client::m_pLocal->GetActiveWeapon();
-	//if (pWeapon && pWeapon->GetWeaponData()->iWeaponType == WEAPONTYPE_GRENADE)
-		//Features::GrenadePrediction::View(pSetup, pWeapon);
 
 	oOverrideView(Interfaces::m_pClientMode, 0, pSetup);
 }

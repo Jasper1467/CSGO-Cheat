@@ -1,362 +1,226 @@
 #include "GrenadePrediction.h"
 
-#include "../SDK/CUserCmd.h"
+#include "../SDK/CEntity.h"
+#include "../Utilities/Game.h"
 #include "../Utilities/Client.h"
-#include "../Utilities/Interfaces.h"
-#include "../Utilities/Render.h"
 #include "../Utilities/Math.h"
 #include "../Menu/Config/Vars.h"
+#include "../Utilities/Render.h"
 
-#include "AutoWall.h"
-
-void Features::GrenadePrediction::Tick(int nButtons)
+void Features::GrenadePrediction::Predict()
 {
-	if (!Vars::Visuals::World::m_bGrenadePrediction)
-		return;
+	// TODO: Make these values dynamic
+	constexpr float restitution = 0.45f;
+	constexpr float power[ ] = { 1.0f, 1.0f, 0.5f, 0.0f };
+	constexpr float velocity = 403.0f * 0.9f;
 
-	m_nAct = ACT_NONE;
+	float step, gravity, new_velocity, unk01;
+	int index{}, grenade_act{ 1 };
+	Vector pos, thrown_direction, start, eye_origin;
+	QAngle angles, thrown;
 
-	auto in_attack = nButtons & IN_ATTACK;
-	auto in_attack2 = nButtons & IN_ATTACK2;
+	//	first time setup
+	static auto sv_gravity = Interfaces::m_pCVar->FindVar( "sv_gravity" );
 
-	if (in_attack || in_attack2)
-	{
-		if (in_attack && in_attack2)
-			m_nAct = ACT_LOB;
-		else if (!in_attack)
-			m_nAct = ACT_DROP;
-		else
-			m_nAct = ACT_THROW;
+	//	calculate step and actual gravity value
+	gravity = sv_gravity->GetFloat( ) / 8.0f;
+	step = Interfaces::m_pGlobals->m_flIntervalPerTick;
+
+	//	get local view and eye origin
+	eye_origin = Client::m_pLocal->GetEyePos();
+	angles = Client::m_pCmd->m_angViewAngles;
+
+	//	copy current angles and normalise pitch
+	thrown = angles;
+
+	if( thrown.pitch < 0 ) {
+		thrown.pitch = -10 + thrown.pitch * ( ( 90 - 10 ) / 90.0f );
 	}
-	else if (!Vars::Visuals::World::m_bGrenadePredictionOnClick)
-		m_nAct = ACT_THROW;
-}
-
-void Features::GrenadePrediction::View(CViewSetup* pSetup, CWeapon* pWeapon)
-{
-	if (!Vars::Visuals::World::m_bGrenadePrediction)
-		return;
-
-	if (Client::m_pLocal->IsAlive())
-	{
-		if (m_nAct != ACT_NONE)
-		{
-			m_nType = pWeapon->m_iItemDefinitionIndex();
-			Simulate(pSetup);
-		}
-		else
-			m_nType = 0;
+	else {
+		thrown.pitch = -10 + thrown.pitch * ( ( 90 + 10 ) / 90.0f );
 	}
-}
 
+	//	find out how we're throwing the grenade
+	auto primary_attack = Client::m_pCmd->m_nButtons & IN_ATTACK;
+	auto secondary_attack = Client::m_pCmd->m_nButtons & IN_ATTACK2;
 
-float CSGO_Armor(float flDamage, int ArmorValue)
-{
-	float flArmorRatio = 0.5f;
-	float flArmorBonus = 0.5f;
-	if (ArmorValue > 0) {
-		float flNew = flDamage * flArmorRatio;
-		float flArmor = (flDamage - flNew) * flArmorBonus;
-
-		if (flArmor > static_cast<float>(ArmorValue)) {
-			flArmor = static_cast<float>(ArmorValue) * (1.f / flArmorBonus);
-			flNew = flDamage - flArmor;
-		}
-
-		flDamage = flNew;
+	if( primary_attack && secondary_attack ) {
+		grenade_act = ACT_LOB;
 	}
-	return flDamage;
-}
+	else if( secondary_attack ) {
+		grenade_act = ACT_DROP;
+	}
 
-void Features::GrenadePrediction::Paint()
-{
-	if (!Vars::Visuals::World::m_bGrenadePrediction)
-		return;
+	//	apply 'magic' and modulate by velocity
+	unk01 = power[ grenade_act ];
 
-	if (!Client::m_pLocal->IsAlive())
-		return;
+	unk01 = unk01 * 0.7f;
+	unk01 = unk01 + 0.3f;
 
-	auto pWeapon = Client::m_pLocal->GetActiveWeapon();
-	if (!pWeapon)
-		return;
+	new_velocity = velocity * unk01;
 
-	if (m_Path.size() < 2)
-		return;
+	//	here's where the fun begins
+	Math::AngleVectors( thrown, thrown_direction );
 
-	Vector vecPrev = m_Path[0];
+	start = eye_origin + thrown_direction * 16.0f;
+	thrown_direction = ( thrown_direction * new_velocity ) + Client::m_pLocal->m_vecVelocity();
 
-	std::vector<ImVec2> Points = {};
-	Points.clear();
-	
-	if (m_nType && m_Path.size() > 1)
-	{
-		ImVec2 vecStart, vecEnd;
+	//	let's go ahead and predict
+	for( auto time = 0.0f; index < 500; time += step ) {
+		pos = start + thrown_direction * step;
 
-		for (const auto& it : m_Path)
-		{
-			if (Renderer::WorldToScreen(vecPrev, vecStart) && Renderer::WorldToScreen(it, vecEnd))
-				Points.push_back(vecEnd);
+		//	setup trace
+		trace_t trace;
+		CTraceFilter filter(Client::m_pLocal);
 
-			vecPrev = it;
+		Interfaces::m_pTrace->TraceRay( Ray_t{ start, pos }, MASK_SOLID, &filter, &trace );
+
+		//	modify path if we have hit something
+		if( trace.flFraction != 1.0f ) {
+			thrown_direction = trace.plane.vecNormal * -2.0f * thrown_direction.Dot( trace.plane.vecNormal ) + thrown_direction;
+
+			thrown_direction *= restitution;
+
+			pos = start + thrown_direction * trace.flFraction * step;
+
+			time += ( step * ( 1.0f - trace.flFraction ) );
 		}
 
-		if (!Points.empty())
-			Renderer::PolyLine(Points.data(), Points.size(), Color(255, 0, 0, 255), false, 1.5f);
+		//	check for detonation
+		auto detonate = Detonated( Client::m_pLocal->GetActiveWeapon(), time, trace );
 
-		Renderer::CircleFilled(vecEnd, 5.f, Color(0, 255, 0, 255), 20);
-		Renderer::CircleFilled(vecEnd, 4.f, Color(0, 255, 0, 255), 20);
-	}
-}
+		//	emplace nade point
+		m_Points.at( index++ ) = NadePoint_t( start, pos, trace.plane.vecNormal, trace.flFraction != 1.0f, true, detonate);
+		start = pos;
 
-void Features::GrenadePrediction::Setup(Vector& vecSrc, Vector& vecThrow, const QAngle& angViewAngles)
-{
-	QAngle angThrow = angViewAngles;
-	float pitch = Math::NormalizePitch(angThrow.pitch);
+		//	apply gravity modifier
+		thrown_direction.z -= gravity * trace.flFraction * step;
 
-	float a = pitch - (90.0f - fabs(pitch)) * 10.0f / 90.0f;
-	angThrow.pitch = a;
-
-	float flVel = 750.0f * 0.9f;
-	static const float power[] = { 1.0f, 1.0f, 0.5f, 0.0f };
-	float b = power[m_nAct];
-	b = b * 0.7f; b = b + 0.3f;
-	flVel *= b;
-
-	Vector vForward, vRight, vUp;
-	Math::AngleVectors(angThrow, vForward, vRight, vUp);
-
-	vecSrc = Client::m_pLocal->GetEyePos();
-	float off = power[m_nAct] * 12.0f - 12.0f;
-	vecSrc.z += off;
-
-	trace_t tr;
-	Vector vecDest = vecSrc;
-	vecDest += vForward * 22.0f;
-
-	TraceHull(vecSrc, vecDest, tr);
-
-	Vector vecBack = vForward; vecBack *= 6.0f;
-	vecSrc = tr.vecEnd;
-	vecSrc -= vecBack;
-
-	vecThrow = Client::m_pLocal->m_vecVelocity(); vecThrow *= 1.25f;
-	vecThrow += vForward * flVel;
-}
-
-void Features::GrenadePrediction::Simulate(CViewSetup* pSetup)
-{
-	Vector vecSrc, vecThrow;
-	QAngle angles; Interfaces::m_pEngine->GetViewAngles(&angles);
-	Setup(vecSrc, vecThrow, angles);
-
-	float interval = Interfaces::m_pGlobals->m_flIntervalPerTick;
-	int logstep = (int)(0.05f / interval);
-	int logtimer = 0;
-
-	m_Path.clear();
-	m_Others.clear();
-
-	for (auto i = 0; i < 4096; ++i)
-	{
-		if (!logtimer)
-			m_Path.push_back(vecSrc);
-
-		int s = Step(vecSrc, vecThrow, i, interval);
-
-		if (s & 1)
+		if( detonate ) {
 			break;
-
-		if (s & 2 || logtimer >= logstep)
-			logtimer = 0;
-		else
-			++logtimer;
-
-		if (!vecThrow.IsValid())
-			break;
+		}
 	}
 
-	m_Path.push_back(vecSrc);
-	m_Others.emplace_back(std::make_pair(vecSrc, Color(255, 0, 0, 255)));
-}
-
-
-int Features::GrenadePrediction::Step(Vector& vecSrc, Vector& vecThrow, int tick, float interval)
-{
-	Vector move; AddGravityMove(move, vecThrow, interval, false);
-	trace_t tr; PushEntity(vecSrc, move, tr);
-
-	int result = 0;
-
-	if (CheckDetonate(vecThrow, tr, tick, interval))
-		result |= 1;
-
-	if (tr.flFraction != 1.0f)
-	{
-		result |= 2;
-		ResolveFlyCollisionCustom(tr, vecThrow, move, interval);
-
-		QAngle angles;
-		Math::VectorAngles((tr.vecEnd - tr.vecStart).Normalized(), angles);
-		m_Others.emplace_back(std::make_pair(tr.vecEnd, Color(255, 255, 255, 255)));
+	//	invalidate all empty points and finish prediction
+	for( auto n = index; n < 500; ++n ) {
+		m_Points.at( n ).m_bValid = false;
 	}
 
-	vecSrc = tr.vecEnd;
-	return result;
+	m_bPredicted = true;
 }
 
-
-bool Features::GrenadePrediction::CheckDetonate(const Vector& vecThrow, const trace_t& tr, int nTick, float flInterval)
+bool Features::GrenadePrediction::Detonated(CWeapon* pWeapon, float flTime, trace_t& Trace)
 {
-	static auto molotov_throw_detonate_time = Interfaces::m_pCVar->FindVar("molotov_throw_detonate_time");
-	static auto weapon_molotov_maxdetonateslope = Interfaces::m_pCVar->FindVar("weapon_molotov_maxdetonateslope");
+	if( !pWeapon ) {
+		return true;
+	}
 
-	auto time = TICKS_TO_TIME(nTick);
+	//	get weapon item index
+	const auto index = pWeapon->m_iItemDefinitionIndex();
 
-	switch (m_nType)
-	{
+	switch( index ) {
+		//	flash and HE grenades only live up to 2.5s after thrown
 	case WEAPON_FLASHBANG:
 	case WEAPON_HEGRENADE:
-		return time >= 1.5f && !(nTick % TIME_TO_TICKS(0.2f));
+		if( flTime > 2.5f ) {
+			return true;
+		}
+		break;
 
-	case WEAPON_SMOKEGRENADE:
-		return vecThrow.Length() <= 0.1f && !(nTick % TIME_TO_TICKS(0.2f));
-
-	case WEAPON_DECOY:
-		return vecThrow.Length() <= 0.2f && !(nTick % TIME_TO_TICKS(0.2f));
-
+		//	fire grenades detonate on ground hit, or 3.5s after thrown
 	case WEAPON_MOLOTOV:
 	case WEAPON_INCGRENADE:
-	case WEAPON_FIREBOMB:
-
-		if (tr.flFraction != 1.f && (std::cos(DEG2RAD(weapon_molotov_maxdetonateslope->GetFloat())) <= tr.plane.vecNormal.z))
+		if( Trace.flFraction!= 1.0f && Trace.plane.vecNormal.z > 0.7f || flTime > 3.5f ) {
 			return true;
+		}
+		break;
 
-		return time >= molotov_throw_detonate_time->GetFloat() && !(nTick % TIME_TO_TICKS(0.1f));
-	case WEAPON_SNOWBALL:
-		if (tr.DidHit())
+		//	decoy and smoke grenades were buggy in prediction, so i used this ghetto work-around
+	case WEAPON_SMOKEGRENADE:
+	case WEAPON_DECOY:
+		if( flTime > 2.5f ) {
 			return true;
-		return vecThrow.Length() <= 0.1f && !(nTick % TIME_TO_TICKS(0.2f));
-	default:
-		return false;
+		}
+		break;
 	}
 
 	return false;
 }
 
-void Features::GrenadePrediction::TraceHull(Vector& vecSrc, Vector& vecEnd, trace_t& tr)
+void Features::GrenadePrediction::Trace()
 {
-	CTraceFilter filter(Client::m_pLocal);
+	if(!Vars::Visuals::World::m_bGrenadePrediction)
+		return;
 
-	Ray_t Ray(vecSrc, vecEnd, Vector(-2.0f, -2.0f, -2.0f), Vector(2.0f, 2.0f, 2.0f));
+	if( !( Client::m_pCmd->m_nButtons & IN_ATTACK ) && !( Client::m_pCmd->m_nButtons & IN_ATTACK2 ) ) {
+		m_bPredicted = false;
+		return;
+	}
 
-	const unsigned int mask = 0x200400B;
-	Interfaces::m_pTrace->TraceRay(Ray, mask, &filter, &tr);
+	const static std::vector< int > nades{
+		WEAPON_FLASHBANG,
+		WEAPON_SMOKEGRENADE,
+		WEAPON_HEGRENADE,
+		WEAPON_MOLOTOV,
+		WEAPON_DECOY,
+		WEAPON_INCGRENADE
+	};
+
+	//	grab local weapon
+	auto weapon = Client::m_pLocal->GetActiveWeapon();
+
+	if( !weapon ) {
+		return;
+	}
+
+	if( std::find( nades.begin( ), nades.end( ), weapon->m_iItemDefinitionIndex( ) ) != nades.end( ) ) {
+		return Predict();
+	}
+
+	m_bPredicted = false;
 }
 
-
-void Features::GrenadePrediction::AddGravityMove(Vector& vecMove, Vector& vecVelocity, float flFrameTime, bool bOnGround)
+void Features::GrenadePrediction::Draw()
 {
-	static auto sv_gravity = Interfaces::m_pCVar->FindVar("sv_gravity");
+	if( !Vars::Visuals::World::m_bGrenadePrediction)
+		return;
 
-	float gravity = sv_gravity->GetFloat() * 0.4f;
+	if( !Interfaces::m_pEngine->IsInGame() || !Client::m_pLocal || !Client::m_pLocal->IsAlive())
+		return;
 
-	float flInterval = Interfaces::m_pGlobals->m_flIntervalPerTick;
+	auto draw_3d_dotted_circle = [ ]( Vector position, float points, float radius ) {
+		float step = M_PI * 2.0f / points;
+		for( float a = 0; a < M_PI * 2.0f; a += step ) {
+			Vector start( radius * cosf( a ) + position.x, radius * sinf( a ) + position.y, position.z );
 
-	vecMove.x = vecVelocity.x * flInterval;
-	vecMove.y = vecVelocity.y * flInterval;
+			ImVec2 start2d;
+			if( Renderer::WorldToScreen( start, start2d ) )
+				Renderer::Line(start2d.x, start2d.y, start2d.x + 1, start2d.y + 1, Color( 255, 255, 255 ));
+		}
+	};
 
-	float z = vecVelocity.z - (gravity * flInterval);
+	ImVec2 start, end;
 
-	vecMove.z = ((vecVelocity.z + z) / 2.f) * flInterval;
-
-	vecVelocity.z = z;
-}
-
-
-void Features::GrenadePrediction::PushEntity(Vector& vecSrc, const Vector& vecMove, trace_t& tr)
-{
-	Vector vecAbsend = vecSrc;
-	vecAbsend += vecMove;
-	TraceHull(vecSrc, vecAbsend, tr);
-}
-
-void Features::GrenadePrediction::ResolveFlyCollisionCustom(trace_t& tr, Vector& vecVelocity, const Vector& vecMove, float flInterval)
-{
-	if (tr.pHitEntity)
-	{
-		if (AutoWall::IsBreakableEntity(tr.pHitEntity))
-		{
-			auto client_class = tr.pHitEntity->GetClientClass();
-
-			if (!client_class)
-				return;
-
-			auto network_name = client_class->m_pNetworkName;
-			if (((CPlayer*)(tr.pHitEntity))->IsPlayer() && strcmp(network_name, "CBaseEntity"))
-			{
-				PushEntity(tr.vecEnd, vecMove, tr);
-				vecVelocity *= 0.1f;
-				return;
+	//	draw nade path
+	if(m_bPredicted ) {
+		for( auto &p : m_Points ) {
+			if( !p.m_bValid ) {
+				break;
 			}
 
-			if (tr.bAllSolid || tr.DidHit() || strcmp(network_name, "CFuncBrush") && strcmp(network_name, "CFuncBrush") && strcmp(network_name, "CBaseDoor") && strcmp(network_name, "CCSPlayer")) //-V526
-			{
-				PushEntity(tr.vecEnd, vecMove, tr);
-				vecVelocity *= 0.4f;
-				return;
+			if( Renderer::WorldToScreen( p.m_vecStart, start ) && Renderer::WorldToScreen( p.m_vecEnd, end ) ) {
+				//	draw line
+				Renderer::Line(start.x, start.y, end.x, end.y, Color( 0, 125, 255 ));
+
+				//	draw small box if detonated or hit a wall
+				if( p.m_bDetonate || p.m_bPlane ) {
+					Renderer::Rect(ImVec2(start.x - 2, start.y - 2),
+						ImVec2(5, 5), p.m_bDetonate ? Color(255, 0, 0) : Color(255, 255, 255), 5.f);
+				}
+
+				if( p.m_bDetonate )
+						draw_3d_dotted_circle( p.m_vecEnd, 100, 150 );
 			}
 		}
 	}
-
-	float flSurfaceElasticity = 1.0, flGrenadeElasticity = 0.45f;
-	float flTotalElasticity = flGrenadeElasticity * flSurfaceElasticity;
-	if (flTotalElasticity > 0.9f) flTotalElasticity = 0.9f;
-	if (flTotalElasticity < 0.0f) flTotalElasticity = 0.0f;
-
-	Vector vecAbsVelocity;
-	PhysicsClipVelocity(vecVelocity, tr.plane.vecNormal, vecAbsVelocity, 2.0f);
-	vecAbsVelocity *= flTotalElasticity;
-
-	float flSpeedSqr = vecAbsVelocity.LengthSqr();
-	static const float flMinSpeedSqr = 20.0f * 20.0f;
-
-	if (flSpeedSqr < flMinSpeedSqr)
-	{
-		vecAbsVelocity.x = 0.0f;
-		vecAbsVelocity.y = 0.0f;
-		vecAbsVelocity.z = 0.0f;
-	}
-
-	if (tr.plane.vecNormal.z > 0.7f)
-	{
-		vecVelocity = vecAbsVelocity;
-		vecAbsVelocity *= ((1.0f - tr.flFraction) * flInterval);
-		PushEntity(tr.vecEnd, vecAbsVelocity, tr);
-	}
-	else
-		vecVelocity = vecAbsVelocity;
-}
-
-int Features::GrenadePrediction::PhysicsClipVelocity(const Vector& vecIn, const Vector& vecNormal, Vector& vecOut, float flOverBounce)
-{
-	static const float STOP_EPSILON = 0.1f;
-
-	float backoff, change, angle;
-	int   i, blocked;
-
-	blocked = 0;
-	angle = vecNormal[2];
-
-	if (angle > 0) blocked |= 1;
-	if (!angle) blocked |= 2;
-
-	backoff = vecIn.Dot(vecNormal) * flOverBounce;
-	for (i = 0; i < 3; i++)
-	{
-		change = vecNormal[i] * backoff;
-		vecOut[i] = vecIn[i] - change;
-		if (vecOut[i] > -STOP_EPSILON && vecOut[i] < STOP_EPSILON)
-			vecOut[i] = 0;
-	}
-	return blocked;
 }

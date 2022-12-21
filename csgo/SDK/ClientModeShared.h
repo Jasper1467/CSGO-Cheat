@@ -69,7 +69,6 @@ public:
     bool m_bCSMView;
 };
 
-
 class ClientModeShared
 {
 public:

@@ -65,7 +65,7 @@ void Renderer::BeginScene()
 	{
 		Features::Visuals::AddToDrawList();
 		Features::Events::Draw();
-		Features::GrenadePrediction::Paint();
+		Features::GrenadePrediction::Draw();
 	}
 
 	RectFilled(ImVec2(Client::m_nScreenSizeX, 0.f), ImVec2(Client::m_nScreenSizeX - 250.f, 30.f), Color(0, 0, 0, 255));

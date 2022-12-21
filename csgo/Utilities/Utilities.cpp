@@ -54,7 +54,14 @@ uint8_t* Utilities::ScanSignature(HMODULE hModule, const char* szSignature)
 
 uint8_t* Utilities::ScanSignature(const char* szModule, const char* szSignature)
 {
-	return ScanSignature(GetModuleHandleA(szModule), szSignature);
+	uint8_t* pRes = ScanSignature(GetModuleHandleA(szModule), szSignature);
+	if (!pRes)
+	{
+		printf("[ERROR] Signature not found: %s ; %s\n", szModule, szSignature);
+		return nullptr;
+	}
+
+	return pRes;
 }
 
 const char* Utilities::Format(const char* szFmt, ...)
