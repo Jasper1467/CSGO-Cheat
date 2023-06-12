@@ -80,16 +80,17 @@ bool Interfaces::Initialize()
 	m_pDevice = **reinterpret_cast<IDirect3DDevice9***>(
 		SCAN_SIGNATURE("shaderapidx9.dll", "A1 ? ? ? ? 50 8B 08 FF 51 0C") + 1);
 
-	m_pInput = *(CInput**)(SCAN_SIGNATURE("client.dll", "B9 ? ? ? ? F3 0F 11 04 24 FF 50 10") + 1);
-	m_pGlobals = **(CGlobalVarsBase***)(SCAN_SIGNATURE("client.dll", "A1 ? ? ? ? 5E 8B 40 10") + 1);
+	//m_pInput = *(CInput**)(SCAN_SIGNATURE("client.dll", "B9 ? ? ? ? F3 0F 11 04 24 FF 50 10") + 1);
+	//m_pGlobals = **(CGlobalVarsBase***)(SCAN_SIGNATURE("client.dll", "A1 ? ? ? ? 5E 8B 40 10") + 1);
 	m_pWeaponSystem = *(IWeaponSystem**)(SCAN_SIGNATURE("client.dll", "8B 35 ? ? ? ? FF 10 0F B7 C0") + 2);
 	m_pViewRender = **(void****)(SCAN_SIGNATURE("client.dll", "8B 0D ? ? ? ? FF 75 0C 8B 45 08") + 2);
-	m_pGlowManager = *(IGlowObjectManager**)(SCAN_SIGNATURE("client.dll", "0F 11 05 ? ? ? ? 83 C8 01") + 2);
+	m_pGlowManager = *(IGlowObjectManager**)(SCAN_SIGNATURE("client.dll", "0F 11 05 ? ? ? ? 83 C8 01") + 3);
 
 	m_pClientState = **(CClientState***)(SCAN_SIGNATURE("engine.dll", "A1 ? ? ? ? 8B 88 ? ? ? ? 85 C9 75 07") + 1);
 
-	// From CHLClient::HudProcessInput
 	m_pClientMode = **(ClientModeShared***)(GetVFunc<uintptr_t>(m_pClient, 10) + 5);
+	m_pInput = *(CInput**)(GetVFunc<uintptr_t>(m_pClient, 16) + 1);
+	m_pGlobals = **(CGlobalVarsBase***)(GetVFunc<uintptr_t>(m_pClient, 0) + 0x1F);
 
 	m_pMemAlloc = *(IMemAlloc**)(GetProcAddress(GetModuleHandleA("tier0.dll"), "g_pMemAlloc"));
 

@@ -4,6 +4,7 @@
 #include "../Utilities/Interfaces.h"
 #include "../Utilities/Math.h"
 #include "../Utilities/Client.h"
+#include "IWeaponSystem.h"
 
 void IClientEntity::SetAbsOrigin(const Vector& vecorigin)
 {
@@ -111,7 +112,7 @@ float CPlayer::GetMaxSpeed()
 
 	return 250.f;
 
-	//return (pData-> == WEAPONTYPE_SNIPER) ? pData->m_flMaxPlayerSpeedAlt : pData->m_flMaxPlayerSpeed;
+	//return pData->iWeaponType == WEAPONTYPE_SNIPER ? pData->m_flMaxPlayerSpeedAlt : pData->m_flMaxPlayerSpeed;
 }
 
 Vector CPlayer::GetBonePos(int nBone)

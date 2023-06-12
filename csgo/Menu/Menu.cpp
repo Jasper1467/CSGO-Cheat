@@ -105,7 +105,7 @@ void RenderAntiaimTab()
     auto& style = ImGui::GetStyle();
     float group_w = ImGui::GetCurrentWindow()->Size.x - style.WindowPadding.x * 2;
 
-    ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2{ style.WindowPadding.x, style.ItemSpacing.y });
+    //ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2{ style.WindowPadding.x, style.ItemSpacing.y });
 
     ImGuiEx::BeginGroupBox("##body_content");
     {
@@ -131,7 +131,7 @@ void RenderAntiaimTab()
     }
     ImGuiEx::EndGroupBox();
 
-    ImGui::PopStyleVar();
+    //ImGui::PopStyleVar();
 }
 
 void RenderVisualsTab()
@@ -142,11 +142,11 @@ void RenderVisualsTab()
     static const char* szEspTabNames[] = { "PLAYERS", "WORLD", "SCREEN", "MISC" };
     static int nCurrentEspTab = 0;
 
-    ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0, 0));
+    //ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0, 0));
     {
         render_tabs(szEspTabNames, nCurrentEspTab, group_w / _countof(szEspTabNames), 25.0f, true);
     }
-    ImGui::PopStyleVar();
+    //ImGui::PopStyleVar();
     ImGuiEx::BeginGroupBox("##body_content");
     {
         if (nCurrentEspTab == 0) // Players
@@ -154,15 +154,15 @@ void RenderVisualsTab()
             const char* szEspPlayerTabNames[] = { "ENEMIES", "TEAMMATES" };
             static int nCurrentEspPlayerTab = 0;
 
-            ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0, 0));
+            //ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0, 0));
             {
                 render_tabs(szEspPlayerTabNames, nCurrentEspPlayerTab, group_w / _countof(szEspPlayerTabNames), 25.0f, true);
             }
-            ImGui::PopStyleVar();
+            //ImGui::PopStyleVar();
 
             if (nCurrentEspPlayerTab == 0) // Enemies
             {
-                ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2{ style.WindowPadding.x, style.ItemSpacing.y });
+                //ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2{ style.WindowPadding.x, style.ItemSpacing.y });
 
                 ImGuiEx::BeginGroupBox("##body_content");
                 {
@@ -200,11 +200,11 @@ void RenderVisualsTab()
                 }
                 ImGuiEx::EndGroupBox();
 
-                ImGui::PopStyleVar();
+                //ImGui::PopStyleVar();
             }
             else if (nCurrentEspPlayerTab == 1) // Teammates
             {
-                ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2{ style.WindowPadding.x, style.ItemSpacing.y });
+                //ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2{ style.WindowPadding.x, style.ItemSpacing.y });
 
                 ImGuiEx::BeginGroupBox("##body_content");
                 {
@@ -238,12 +238,12 @@ void RenderVisualsTab()
                     ImGuiEx::ColorPicker("Glow Color", &Vars::Visuals::Players::Teammates::m_colGlow);
                 }
                 ImGuiEx::EndGroupBox();
-                ImGui::PopStyleVar();
+                //ImGui::PopStyleVar();
             }
         }
         else if (nCurrentEspTab == 1) // World
         {
-            ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2{ style.WindowPadding.x, style.ItemSpacing.y });
+            //ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2{ style.WindowPadding.x, style.ItemSpacing.y });
 
             ImGuiEx::BeginGroupBox("##body_content");
             {
@@ -261,11 +261,11 @@ void RenderVisualsTab()
             }
             ImGuiEx::EndGroupBox();
             
-            ImGui::PopStyleVar();
+            //ImGui::PopStyleVar();
         }
         else if (nCurrentEspTab == 2) // Screen
         {
-            ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2{ style.WindowPadding.x, style.ItemSpacing.y });
+            //ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2{ style.WindowPadding.x, style.ItemSpacing.y });
 
             ImGuiEx::BeginGroupBox("##body_content");
             {
@@ -293,11 +293,11 @@ void RenderVisualsTab()
             }
             ImGuiEx::EndGroupBox();
 
-            ImGui::PopStyleVar();
+            //ImGui::PopStyleVar();
         }
         else if (nCurrentEspTab == 3) // Misc
         {
-            ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2{ style.WindowPadding.x, style.ItemSpacing.y });
+            //ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2{ style.WindowPadding.x, style.ItemSpacing.y });
 
             ImGuiEx::BeginGroupBox("##body_content");
             {
@@ -309,7 +309,7 @@ void RenderVisualsTab()
             }
             ImGuiEx::EndGroupBox();
 
-            ImGui::PopStyleVar();
+            //ImGui::PopStyleVar();
         }
     }
     ImGuiEx::EndGroupBox();
@@ -322,11 +322,11 @@ void RenderMiscTab()
     static const char* szMiscTabNames[] = { "MAIN", "MOVEMENT" };
     static int nCurrentMiscTab = 0;
 
-    ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0, 0));
+    //ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0, 0));
     {
         render_tabs(szMiscTabNames, nCurrentMiscTab, group_w / _countof(szMiscTabNames), 25.0f, true);
     }
-    ImGui::PopStyleVar();
+    //ImGui::PopStyleVar();
     ImGuiEx::BeginGroupBox("##body_content");
     {
         if (nCurrentMiscTab == 0) // Main
@@ -358,7 +358,7 @@ void RenderConfigTab()
     auto& style = ImGui::GetStyle();
     float group_w = ImGui::GetCurrentWindow()->Size.x - style.WindowPadding.x * 2;
 
-    ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2{ style.WindowPadding.x, style.ItemSpacing.y });
+    //ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2{ style.WindowPadding.x, style.ItemSpacing.y });
 
     ImGuiEx::BeginGroupBox("##body_content");
     {
@@ -366,7 +366,7 @@ void RenderConfigTab()
     }
     ImGuiEx::EndGroupBox();
 
-    ImGui::PopStyleVar();
+    //ImGui::PopStyleVar();
 }
 
 void Menu::Render()
@@ -408,12 +408,12 @@ void Menu::Render()
         ImGuiWindowFlags_NoMove | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoResize
         | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoTitleBar);
     {
-        ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0, 0));
+        //ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0, 0));
         {
             render_tabs(g_szTabNames, nSidebarTab, 110, 170, false);
         }
         ImGui::End();
-        ImGui::PopStyleVar();
+        //ImGui::PopStyleVar();
     }
 
     // Restore style for tabs
@@ -439,7 +439,7 @@ void Menu::Render()
         // except for the width, which we will set to auto
         //auto size = ImVec2{ 0.f, GetSidebarSize().y };
 
-        ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2{ Style.WindowPadding.x, Style.ItemSpacing.y });
+        //ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2{ Style.WindowPadding.x, Style.ItemSpacing.y });
         //ImGuiEx::BeginGroupBox("##body");
         {
             if (nSidebarTab == TAB_LEGITBOT)
@@ -457,31 +457,13 @@ void Menu::Render()
         }
         //ImGuiEx::EndGroupBox();
         ImGui::End();
-        ImGui::PopStyleVar();
+        //ImGui::PopStyleVar();
     }
 
 #ifdef DEVELOPER
-    if (ImGui::Begin("Menu Design Tester", &Menu::m_bIsVisible))
+    if (ImGui::Begin("Developer", &Menu::m_bIsVisible))
     {
-        ImGuiEx::BeginGroupBox("Group Box");
-
-        bool bCheckBox = false;
-        ImGui::Checkbox("Checkbox", &bCheckBox);
-
-        int nSliderInt = 50;
-        ImGui::SliderInt("SliderInt", &nSliderInt, 0, 100);
-
-        float nSliderFloat = 50.f;
-        ImGui::SliderFloat("SliderFloat", &nSliderFloat, 0.f, 100.f);
-
-        ImGuiEx::Button("Button");
-
-        ColorVar color = ColorVar(ImColor(1.f, 1.f, 1.f, 1.f));
-        ImGuiEx::ColorPicker("Color Picker", &color, true);
-
-        ImGuiEx::HelpMarker("This is a help marker");
-
-        ImGuiEx::EndGroupBox();
+        
 
         ImGui::End();
     }

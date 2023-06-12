@@ -223,12 +223,11 @@ static void __stdcall CreateMove(int nSequenceNumber, float flInputSampleFrameti
 	oCreateMove(Interfaces::m_pClient, 0, nSequenceNumber, flInputSampleFrametime, bIsActive);
 
 	Client::m_pCmd = Interfaces::m_pInput->GetUserCmd(nSequenceNumber);
-	auto pVerified = Interfaces::m_pInput->GetVerifiedCmd(nSequenceNumber);
-
 	if (!Client::m_pCmd)
-		throw std::runtime_error("Client::m_pCmd is nullptr");
-	
-	if (!Client::m_pCmd || !pVerified || !bIsActive)
+		printf("Client::m_pCmd is nullptr");
+
+	auto pVerified = Interfaces::m_pInput->GetVerifiedCmd(nSequenceNumber);
+	if (!pVerified || !bIsActive)
 		return;
 
 	if (Menu::m_bIsVisible)
@@ -236,14 +235,14 @@ static void __stdcall CreateMove(int nSequenceNumber, float flInputSampleFrameti
 
 	Client::m_pLocal = (CPlayer*)Interfaces::m_pEntityList->GetClientEntity(Interfaces::m_pEngine->GetLocalPlayer());
 	if (!Client::m_pLocal)
-		throw std::runtime_error("Client::m_pLocal is nullptr");
+		printf("Client::m_pLocal is nullptr");
 
 	Client::m_angOldAngles = Client::m_pCmd->m_angViewAngles;
 
 	if (Vars::Misc::m_bInfiniteDuckStamina)
 		Client::m_pCmd->m_nButtons |= IN_BULLRUSH;
 
-	Features::Misc::BunnyHop();
+	/*Features::Misc::BunnyHop();
 	Features::Misc::AutoStrafer();
 	Features::Misc::ClanTag();
 
@@ -253,7 +252,7 @@ static void __stdcall CreateMove(int nSequenceNumber, float flInputSampleFrameti
 
 	Features::AntiAim::Run(bSendPacket);
 
-	Features::Misc::CorrectMovement();
+	Features::Misc::CorrectMovement();*/
 
 	pVerified->m_Cmd = *Client::m_pCmd;
 	pVerified->m_nCrc = Client::m_pCmd->GetChecksum();
@@ -308,8 +307,8 @@ void __stdcall Hooks::hkFrameStageNotify(int nStage)
 
 			//float cam_idealdist = Interfaces::m_pCVar->FindVar("cam_idealdist")->GetFloat();
 
-			Interfaces::m_pInput->bCameraInThirdPerson = bThirdPerson && Client::m_pLocal->IsAlive();
-			Interfaces::m_pInput->vecCameraOffset.z = bThirdPerson ? 200.f : 150.f;
+			Interfaces::m_pInput->m_cameraInThirdPerson = bThirdPerson && Client::m_pLocal->IsAlive();
+			Interfaces::m_pInput->m_cameraOffset.z = bThirdPerson ? 200.f : 150.f;
 		}
 
 		break;
